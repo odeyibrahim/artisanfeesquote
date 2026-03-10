@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>estimate · editable + pdf + persistence</title>
-    <!-- Roboto Mono – refined monospace -->
+    <title>Quote Builder · Optimised PDF</title>
+    <!-- Roboto Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,12 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* same styles as before – omitted for brevity, but included in full code below */
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
             background: #c0c0c0;
             display: flex;
@@ -25,11 +21,86 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            font-family: 'Roboto Mono', 'Courier New', monospace;
-            padding: 32px 16px;
+            font-family: 'Roboto Mono', monospace;
+            padding: 24px 16px;
+        }
+        .control-bar {
+            max-width: 560px;
+            width: 100%;
+            background: #ffffff;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border: 1px solid #b9b9b9;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 26px;
+        }
+        .toggle-switch input { opacity:0; width:0; height:0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top:0; left:0; right:0; bottom:0;
+            background-color: #aaa;
+            transition: 0.2s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.2s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #1c1c1c; }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        .btn {
+            background: #1c1c1c;
+            border: none;
+            color: white;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 400;
+            padding: 8px 16px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid #1c1c1c;
+            transition: 0.15s;
+            border-radius: 0;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #1c1c1c;
+        }
+        .btn:hover {
+            background: #3a3a3a;
+            border-color: #3a3a3a;
+            color: white;
+        }
+        .btn-outline:hover {
+            background: #1c1c1c;
+            color: white;
         }
 
-        /* receipt card – premium paper feel */
         .receipt {
             max-width: 560px;
             width: 100%;
@@ -42,414 +113,333 @@
             line-height: 1.65;
             margin-bottom: 28px;
         }
-
         .header {
             margin-bottom: 38px;
             border-bottom: 1px solid #222;
             padding-bottom: 16px;
         }
+        .header h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.5px; color: #000; }
+        .header p { font-size: 0.7rem; font-weight: 300; text-transform: uppercase; color: #4f4f4f; }
 
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 500;
-            letter-spacing: -0.5px;
-            color: #000;
-            line-height: 1.2;
-        }
-
-        .header p {
-            font-size: 0.7rem;
-            font-weight: 300;
-            text-transform: uppercase;
-            color: #4f4f4f;
-            letter-spacing: 0.8px;
-        }
-
-        .section {
-            margin-bottom: 52px;
-        }
-
+        .section { margin-bottom: 42px; }
         .section-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-bottom: 1.8px solid #1a1a1a;
-            padding-bottom: 8px;
-            margin-bottom: 24px;
+            font-weight: 600; font-size: 1.1rem; text-transform: uppercase;
+            border-bottom: 1.8px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
         }
+        .section-title .section-controls { display: flex; gap: 8px; }
 
         .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            padding: 6px 0 5px 0;
-            border-bottom: 1px dotted #bcbcbc;
-            font-size: 0.9rem;
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: 6px 0 5px; border-bottom: 1px dotted #bcbcbc; font-size: 0.9rem;
         }
-
-        .desc {
-            font-weight: 350;
-            color: #2b2b2b;
-            padding-right: 24px;
-            flex: 1;
+        .desc { font-weight: 350; color: #2b2b2b; padding-right: 16px; flex: 1; }
+        .price { font-weight: 500; color: #1a1a1a; white-space: nowrap; }
+        .row-remove {
+            margin-left: 10px; color: #aa2222; cursor: pointer; font-weight: bold;
+            font-size: 1.1rem; user-select: none;
         }
-
-        .price {
-            font-weight: 500;
-            color: #1a1a1a;
-            white-space: nowrap;
-            text-align: right;
-            font-size: 0.94rem;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 550;
-            font-size: 0.96rem;
-            padding: 10px 0 6px;
-            margin-top: 6px;
-            border-bottom: 1px dashed #7a7a7a;
-        }
+        .row-remove:hover { color: #ff0000; }
 
         .section-total {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 650;
-            font-size: 1.25rem;
-            padding: 18px 0 8px;
-            margin-top: 20px;
-            border-top: 3px double #1f1f1f;
+            display: flex; justify-content: space-between; font-weight: 650;
+            font-size: 1.1rem; padding: 12px 0 4px; margin-top: 8px; border-top: 2px solid #444;
         }
 
         .note-block {
-            font-size: 0.7rem;
-            color: #4b4b4b;
-            border-top: 1px dashed #aaa;
-            margin-top: 26px;
-            padding-top: 14px;
-            line-height: 1.7;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            font-size: 0.7rem; color: #4b4b4b; border-top: 1px dashed #aaa;
+            margin-top: 20px; padding-top: 12px; line-height: 1.7;
+            display: flex; flex-wrap: wrap; gap: 8px;
         }
-
         .badge {
-            background: #ececec;
-            padding: 2px 10px;
-            font-weight: 400;
-            color: #1e1e1e;
-            font-size: 0.65rem;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
+            background: #ececec; padding: 2px 10px; font-weight: 400;
+            color: #1e1e1e; font-size: 0.65rem; letter-spacing: 0.3px; text-transform: uppercase;
         }
 
-        .grand-container {
-            margin-top: 48px;
-            border-top: 2px solid #1d1d1d;
-            padding-top: 24px;
-        }
-
-        .grand-row {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 650;
-            font-size: 1.7rem;
-            color: #000;
-            letter-spacing: -0.5px;
-        }
-
-        .grand-label {
-            font-size: 0.9rem;
-            font-weight: 400;
-            align-self: flex-end;
-            padding-bottom: 4px;
-            color: #3e3e3e;
-            text-transform: uppercase;
-        }
+        .grand-container { margin-top: 40px; border-top: 2px solid #1d1d1d; padding-top: 20px; }
+        .grand-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.6rem; color: #000; }
+        .grand-label { font-size: 0.9rem; font-weight: 400; align-self: flex-end; color: #3e3e3e; text-transform: uppercase; }
 
         .footer {
-            margin-top: 32px;
-            border-top: 1px solid #222;
-            padding-top: 16px;
-            font-size: 0.65rem;
-            display: flex;
-            justify-content: space-between;
-            text-transform: uppercase;
-            color: #4e4e4e;
-            font-weight: 350;
-            letter-spacing: 0.2px;
+            margin-top: 28px; border-top: 1px solid #222; padding-top: 14px;
+            font-size: 0.65rem; display: flex; justify-content: space-between;
+            text-transform: uppercase; color: #4e4e4e; font-weight: 350;
         }
 
-        [contenteditable="true"] {
-            cursor: text;
-            border-radius: 0;
-            transition: background 0.1s;
-        }
+        .add-section-btn { width: 100%; text-align: center; margin: 16px 0 8px; }
 
-        [contenteditable="true"]:hover {
-            background-color: #f4f4f4;
+        /* view mode hides admin controls */
+        body:not(.admin-mode) .admin-control,
+        body:not(.admin-mode) .row-remove,
+        body:not(.admin-mode) .section-controls,
+        body:not(.admin-mode) .add-section-btn {
+            display: none !important;
         }
-
-        [contenteditable="true"]:focus {
-            outline: 1px solid #8a8a8a;
-            background-color: #fbfbfb;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 18px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 20px 0 20px;
-            max-width: 560px;
-        }
-
-        .btn {
-            background: #1c1c1c;
-            border: none;
-            color: white;
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 400;
-            padding: 12px 28px;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            cursor: pointer;
-            border: 1px solid #1c1c1c;
-            transition: 0.15s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        .btn-outline {
+        body:not(.admin-mode) [contenteditable="true"] {
+            contenteditable: false;
+            pointer-events: none;
             background: transparent;
-            color: #1c1c1c;
         }
-
-        .btn:hover {
-            background: #3a3a3a;
-            border-color: #3a3a3a;
-            color: white;
-        }
-
-        .btn-outline:hover {
-            background: #1c1c1c;
-            color: white;
-        }
-
-        .hint {
-            font-size: 0.6rem;
-            color: #7a7a7a;
-            max-width: 560px;
-            text-align: center;
-            font-weight: 300;
-            margin-top: 4px;
-        }
+        [contenteditable="true"]:hover { background-color: #f4f4f4; }
+        [contenteditable="true"]:focus { outline: 1px solid #8a8a8a; background-color: #fbfbfb; }
     </style>
 </head>
 <body>
-    <!-- RECEIPT – every element contenteditable -->
-    <div class="receipt" id="receiptContainer">
-        <div class="header" contenteditable="true">
-            <h1>ESTIMATE · 2510</h1>
-            <p>10 march 2026  //  interior/exterior + water system</p>
+    <div class="control-bar">
+        <div class="toggle-container">
+            <span style="font-size:0.8rem;">👤 View</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="adminToggle">
+                <span class="slider"></span>
+            </label>
+            <span style="font-size:0.8rem;">⚙️ Admin</span>
         </div>
-
-        <!-- PAINTER SECTION -->
-        <div class="section">
-            <div class="section-title" contenteditable="true">painter · screed & paint</div>
-
-            <div class="row" contenteditable="true"><span class="desc">Pop cement (6 bags) — phase 1: 5 bags</span><span class="price">₦69,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Pop paint (8 drums) — phase 1: 6 drums</span><span class="price">₦72,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Topbond (10 kg)</span><span class="price">₦31,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Smooth sandpaper (5 yards)</span><span class="price">₦5,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Masking tape (4 pcs)</span><span class="price">₦6,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Black gloss – window (1 gal)</span><span class="price">₦20,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Nylon protective sheet</span><span class="price">₦5,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">White emulsion – ceilings (6 drums)</span><span class="price">₦108,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Gloss – stair railing (½ gal)</span><span class="price">₦10,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">White satin drum (2 drums)</span><span class="price">₦130,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">White satin gallon (2)</span><span class="price">₦27,000</span></div>
-
-            <div class="total-row" contenteditable="true"><span>interior materials</span><span>₦483,000</span></div>
-
-            <div style="height: 12px;"></div>
-
-            <div class="row" contenteditable="true"><span class="desc">Beige emulsion – exterior (15 drums)</span><span class="price">₦270,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Beige emulsion – fence (6 drums)</span><span class="price">₦108,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Texture paint – fence (1 drum)</span><span class="price">₦27,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Transportation</span><span class="price">₦10,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Ladder hire (5 days)</span><span class="price">₦25,000</span></div>
-
-            <div class="total-row" contenteditable="true"><span>exterior + logistics</span><span>₦440,000</span></div>
-
-            <div class="row" contenteditable="true" style="border-bottom: none;"><span class="desc">Workmanship (labour)</span><span class="price">₦700,000</span></div>
-
-            <div class="section-total" contenteditable="true"><span>painter total</span><span>₦1,623,000</span></div>
-
-            <div class="note-block" contenteditable="true">
-                <span class="badge" contenteditable="true">painter note</span> pop cement/paint phased · ladder 5 days included
-            </div>
-        </div>
-
-        <!-- PLUMBER SECTION -->
-        <div class="section">
-            <div class="section-title" contenteditable="true">plumber · connectors & treatment</div>
-
-            <div class="row" contenteditable="true"><span class="desc">Flexible connector (15)</span><span class="price">₦37,500</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Tee tap (15)</span><span class="price">₦37,500</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Palm connector (5)</span><span class="price">₦32,500</span></div>
-            <div class="row" contenteditable="true"><span class="desc">M/F socket (20)</span><span class="price">₦4,000</span></div>
-            <div class="row" contenteditable="true"><span class="desc">Shower (2)</span><span class="price">₦30,000</span></div>
-
-            <div class="total-row" contenteditable="true"><span>connectors subtotal</span><span>₦141,500</span></div>
-
-            <div style="margin-top: 26px;"></div>
-
-            <div class="row" contenteditable="true"><span class="desc">Geepee tank 2000L</span><span class="price"></span></div>
-            <div class="row" contenteditable="true"><span class="desc">Geepee tank 1200L</span><span class="price"></span></div>
-            <div class="row" contenteditable="true"><span class="desc">Fibers / medias / chemicals</span><span class="price"></span></div>
-            <div class="row" contenteditable="true" style="border-bottom: none; font-weight: 500;"><span class="desc">treatment package (lump sum)</span><span class="price">₦1,815,000</span></div>
-
-            <div class="section-total" contenteditable="true" style="margin-top: 26px;"><span>plumber total</span><span>₦1,956,500</span></div>
-
-            <div class="note-block" contenteditable="true">
-                <span class="badge" contenteditable="true">plumber note</span> all connectors & treatment as specified
-            </div>
-        </div>
-
-        <!-- GRAND TOTAL -->
-        <div class="grand-container">
-            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 8px;" contenteditable="true">
-                <span>painter</span><span>₦1,623,000</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 16px;" contenteditable="true">
-                <span>plumber</span><span>₦1,956,500</span>
-            </div>
-            <div class="grand-row" contenteditable="true">
-                <span class="grand-label" contenteditable="true">grand total</span>
-                <span>₦3,579,500</span>
-            </div>
-        </div>
-
-        <div class="footer" contenteditable="true">
-            <span>ref: est#2510</span>
-            <span>10 march 2026</span>
-            <span>contractor copy</span>
+        <div>
+            <button class="btn" id="pdfBtn">Save as PDF</button>
         </div>
     </div>
 
-    <!-- buttons -->
-    <div class="btn-group">
-        <button class="btn" id="previewBtn">screenshot preview</button>
-        <button class="btn btn-outline" id="pdfBtn">save as PDF</button>
-        <button class="btn btn-outline" id="resetBtn">reset to default</button>
-    </div>
-
-    <div class="hint">every text block is editable — changes are saved automatically. PDF downloads directly.</div>
+    <div id="receiptContainer" class="receipt"></div>
 
     <script>
         (function() {
-            const receipt = document.getElementById('receiptContainer');
-            const STORAGE_KEY = 'persistentEstimate';
+            // Default quote data (same as before)
+            let quoteData = {
+                header: { h1: "ESTIMATE · 2510", p: "10 march 2026  //  interior/exterior + water system" },
+                sections: [
+                    {
+                        title: "painter · screed & paint",
+                        items: [
+                            { desc: "Pop cement (6 bags) — phase 1: 5 bags", price: 69000 },
+                            { desc: "Pop paint (8 drums) — phase 1: 6 drums", price: 72000 },
+                            { desc: "Topbond (10 kg)", price: 31000 },
+                            { desc: "Smooth sandpaper (5 yards)", price: 5000 },
+                            { desc: "Masking tape (4 pcs)", price: 6000 },
+                            { desc: "Black gloss – window (1 gal)", price: 20000 },
+                            { desc: "Nylon protective sheet", price: 5000 },
+                            { desc: "White emulsion – ceilings (6 drums)", price: 108000 },
+                            { desc: "Gloss – stair railing (½ gal)", price: 10000 },
+                            { desc: "White satin drum (2 drums)", price: 130000 },
+                            { desc: "White satin gallon (2)", price: 27000 },
+                            { desc: "Beige emulsion – exterior (15 drums)", price: 270000 },
+                            { desc: "Beige emulsion – fence (6 drums)", price: 108000 },
+                            { desc: "Texture paint – fence (1 drum)", price: 27000 },
+                            { desc: "Transportation", price: 10000 },
+                            { desc: "Ladder hire (5 days)", price: 25000 },
+                            { desc: "Workmanship (labour)", price: 700000 }
+                        ],
+                        note: "pop cement/paint phased · ladder 5 days included"
+                    },
+                    {
+                        title: "plumber · connectors & treatment",
+                        items: [
+                            { desc: "Flexible connector (15)", price: 37500 },
+                            { desc: "Tee tap (15)", price: 37500 },
+                            { desc: "Palm connector (5)", price: 32500 },
+                            { desc: "M/F socket (20)", price: 4000 },
+                            { desc: "Shower (2)", price: 30000 },
+                            { desc: "Geepee tank 2000L", price: 0 },
+                            { desc: "Geepee tank 1200L", price: 0 },
+                            { desc: "Fibers / medias / chemicals", price: 0 },
+                            { desc: "treatment package (lump sum)", price: 1815000 }
+                        ],
+                        note: "all connectors & treatment as specified"
+                    }
+                ],
+                footer: { left: "ref: est#2510", center: "10 march 2026", right: "contractor copy" }
+            };
 
-            // ---------- persistence: save on input ----------
-            function saveEdits() {
-                const html = receipt.innerHTML;
-                localStorage.setItem(STORAGE_KEY, html);
-            }
+            const STORAGE_KEY = 'quoteBuilderState';
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) { try { quoteData = JSON.parse(saved); } catch(e) {} }
 
-            // debounce to avoid too many writes
-            let timeout;
-            receipt.addEventListener('input', () => {
-                clearTimeout(timeout);
-                timeout = setTimeout(saveEdits, 300);
-            });
+            const receiptEl = document.getElementById('receiptContainer');
+            const body = document.body;
 
-            // load from localStorage
-            function loadSaved() {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    receipt.innerHTML = saved;
-                }
-            }
+            function formatPrice(num) { return '₦' + num.toLocaleString('en-NG'); }
 
-            // reset to default (original layout)
-            function resetToDefault() {
-                localStorage.removeItem(STORAGE_KEY);
-                window.location.reload(); // simplest: reload to original HTML
-            }
+            function render() {
+                const isAdmin = body.classList.contains('admin-mode');
+                let html = '';
 
-            // call load on page load
-            window.addEventListener('load', loadSaved);
+                // header
+                html += `<div class="header"><h1 contenteditable="${isAdmin}">${quoteData.header.h1}</h1><p contenteditable="${isAdmin}">${quoteData.header.p}</p></div>`;
 
-            // ---------- capture canvas (with better font rendering) ----------
-            function captureCanvas() {
-                // small delay to ensure any pending layout changes settle
-                return new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        html2canvas(receipt, {
-                            scale: 2.2,
-                            backgroundColor: '#ffffff',
-                            logging: false,
-                            allowTaint: false,
-                            useCORS: true,
-                            windowWidth: receipt.scrollWidth,
-                            onclone: (clonedDoc, element) => {
-                                // force Roboto Mono in cloned copy
-                                const style = clonedDoc.createElement('style');
-                                style.innerHTML = `* { font-family: 'Roboto Mono', monospace !important; }`;
-                                clonedDoc.head.appendChild(style);
-                            }
-                        }).then(resolve).catch(reject);
-                    }, 100);
-                });
-            }
+                // sections
+                quoteData.sections.forEach((section, secIdx) => {
+                    html += `<div class="section" data-section-index="${secIdx}">`;
+                    html += `<div class="section-title"><span contenteditable="${isAdmin}">${section.title}</span>`;
+                    if (isAdmin) {
+                        html += `<span class="section-controls admin-control">`;
+                        html += `<button class="btn btn-outline add-item-btn" data-section="${secIdx}" style="padding:4px 8px;">+ item</button>`;
+                        html += `<button class="btn btn-outline remove-section-btn" data-section="${secIdx}" style="padding:4px 8px;">✕ section</button>`;
+                        html += `</span>`;
+                    }
+                    html += `</div>`;
 
-            // preview screenshot
-            document.getElementById('previewBtn').addEventListener('click', () => {
-                captureCanvas().then(canvas => {
-                    const image = canvas.toDataURL('image/png');
-                    const newWindow = window.open('', '_blank');
-                    newWindow.document.write(`
-                        <html><head><title>estimate preview</title>
-                        <style>body { margin:0; display:flex; justify-content:center; background:#e2e2e2; }</style>
-                        </head><body>
-                        <img src="${image}" style="max-width:100%; box-shadow:0 8px 20px rgba(0,0,0,0.2);">
-                        </body></html>
-                    `);
-                }).catch(err => {
-                    alert('Preview failed. You can still take a manual screenshot.');
-                });
-            });
-
-            // save as PDF (direct download)
-            document.getElementById('pdfBtn').addEventListener('click', () => {
-                captureCanvas().then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const { jsPDF } = window.jspdf;
-
-                    // PDF size = canvas dimensions (points = pixels * 0.75 approximately, but we set exact)
-                    const imgWidth = canvas.width;
-                    const imgHeight = canvas.height;
-
-                    // create PDF with exact canvas dimensions (using px unit)
-                    const pdf = new jsPDF({
-                        orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
-                        unit: 'px',
-                        format: [imgWidth, imgHeight]
+                    section.items.forEach((item, itemIdx) => {
+                        html += `<div class="row" data-item-index="${itemIdx}">`;
+                        html += `<span class="desc" contenteditable="${isAdmin}">${item.desc}</span>`;
+                        html += `<span class="price" contenteditable="${isAdmin}">${formatPrice(item.price)}</span>`;
+                        if (isAdmin) html += `<span class="row-remove admin-control" data-section="${secIdx}" data-item="${itemIdx}">✕</span>`;
+                        html += `</div>`;
                     });
 
-                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
-                    pdf.save('estimate_2510.pdf');
-                }).catch(err => {
-                    alert('PDF generation failed. Please try again or screenshot manually.');
+                    const secTotal = section.items.reduce((sum, it) => sum + it.price, 0);
+                    html += `<div class="section-total"><span>section total</span><span>${formatPrice(secTotal)}</span></div>`;
+                    html += `<div class="note-block" contenteditable="${isAdmin}"><span class="badge">${section.title} note</span><span contenteditable="${isAdmin}">${section.note}</span></div>`;
+                    html += `</div>`;
                 });
+
+                if (isAdmin) {
+                    html += `<div class="add-section-btn admin-control"><button class="btn" id="addSectionBtn">+ add new section</button></div>`;
+                }
+
+                const grandTotal = quoteData.sections.reduce((sum, sec) => sum + sec.items.reduce((s, it) => s + it.price, 0), 0);
+                html += `<div class="grand-container">`;
+                quoteData.sections.forEach((sec, i) => {
+                    const secSum = sec.items.reduce((s, it) => s + it.price, 0);
+                    html += `<div style="display:flex;justify-content:space-between;font-size:0.9rem;color:#333;margin-bottom:6px;" contenteditable="${isAdmin}"><span>${sec.title} total</span><span>${formatPrice(secSum)}</span></div>`;
+                });
+                html += `<div class="grand-row" contenteditable="${isAdmin}"><span class="grand-label">grand total</span><span>${formatPrice(grandTotal)}</span></div>`;
+                html += `</div>`;
+
+                html += `<div class="footer"><span contenteditable="${isAdmin}">${quoteData.footer.left}</span><span contenteditable="${isAdmin}">${quoteData.footer.center}</span><span contenteditable="${isAdmin}">${quoteData.footer.right}</span></div>`;
+
+                receiptEl.innerHTML = html;
+
+                if (isAdmin) attachAdminListeners();
+            }
+
+            function attachAdminListeners() {
+                // Remove item
+                document.querySelectorAll('.row-remove').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const secIdx = btn.dataset.section;
+                        const itemIdx = btn.dataset.item;
+                        if (secIdx !== undefined && itemIdx !== undefined) {
+                            quoteData.sections[secIdx].items.splice(itemIdx, 1);
+                            saveAndRender();
+                        }
+                    });
+                });
+
+                // Add item
+                document.querySelectorAll('.add-item-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const secIdx = btn.dataset.section;
+                        if (secIdx !== undefined) {
+                            quoteData.sections[secIdx].items.push({ desc: 'new item', price: 0 });
+                            saveAndRender();
+                        }
+                    });
+                });
+
+                // Remove section
+                document.querySelectorAll('.remove-section-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const secIdx = btn.dataset.section;
+                        if (secIdx !== undefined && quoteData.sections.length > 1) {
+                            quoteData.sections.splice(secIdx, 1);
+                            saveAndRender();
+                        } else alert('Cannot delete the only section.');
+                    });
+                });
+
+                // Add section
+                const addSec = document.getElementById('addSectionBtn');
+                if (addSec) addSec.addEventListener('click', () => {
+                    quoteData.sections.push({ title: 'new section', items: [{ desc: 'new item', price: 0 }], note: 'add notes here' });
+                    saveAndRender();
+                });
+
+                // Contenteditable blur saving
+                receiptEl.querySelectorAll('[contenteditable="true"]').forEach(field => {
+                    field.addEventListener('blur', function() {
+                        const parentRow = this.closest('.row');
+                        if (parentRow) {
+                            const secIdx = parentRow.closest('.section')?.dataset.sectionIndex;
+                            const itemIdx = parentRow.dataset.itemIndex;
+                            if (secIdx !== undefined && itemIdx !== undefined) {
+                                if (this.classList.contains('desc')) {
+                                    quoteData.sections[secIdx].items[itemIdx].desc = this.innerText.trim();
+                                } else if (this.classList.contains('price')) {
+                                    const raw = this.innerText.replace(/[₦,]/g, '').trim();
+                                    quoteData.sections[secIdx].items[itemIdx].price = parseFloat(raw) || 0;
+                                }
+                            }
+                        } else {
+                            // header, section title, note, footer
+                            if (this.closest('.header')?.querySelector('h1') === this) quoteData.header.h1 = this.innerText.trim();
+                            if (this.closest('.header')?.querySelector('p') === this) quoteData.header.p = this.innerText.trim();
+
+                            const sectionTitle = this.closest('.section-title')?.querySelector('span:first-child');
+                            if (sectionTitle === this) {
+                                const secDiv = this.closest('.section');
+                                if (secDiv) quoteData.sections[secDiv.dataset.sectionIndex].title = this.innerText.trim();
+                            }
+
+                            const noteBlock = this.closest('.note-block');
+                            if (noteBlock && this !== noteBlock.querySelector('.badge')) {
+                                const secDiv = this.closest('.section');
+                                if (secDiv) quoteData.sections[secDiv.dataset.sectionIndex].note = this.innerText.trim();
+                            }
+
+                            const footerSpans = this.closest('.footer')?.querySelectorAll('span');
+                            if (footerSpans) {
+                                quoteData.footer.left = footerSpans[0]?.innerText.trim() || quoteData.footer.left;
+                                quoteData.footer.center = footerSpans[1]?.innerText.trim() || quoteData.footer.center;
+                                quoteData.footer.right = footerSpans[2]?.innerText.trim() || quoteData.footer.right;
+                            }
+                        }
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteData));
+                    });
+                });
+            }
+
+            function saveAndRender() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteData));
+                render();
+            }
+
+            // Toggle admin mode
+            const toggle = document.getElementById('adminToggle');
+            toggle.addEventListener('change', (e) => {
+                if (e.target.checked) body.classList.add('admin-mode');
+                else body.classList.remove('admin-mode');
+                render();
             });
 
-            // reset button
-            document.getElementById('resetBtn').addEventListener('click', resetToDefault);
+            render();
+            body.classList.remove('admin-mode');
+            toggle.checked = false;
+
+            // ---------- OPTIMISED PDF EXPORT ----------
+            document.getElementById('pdfBtn').addEventListener('click', function() {
+                const element = document.getElementById('receiptContainer');
+                html2canvas(element, {
+                    scale: 1.5,                 // lower scale = smaller file
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: false,
+                    useCORS: true,
+                }).then(canvas => {
+                    // Use JPEG with 80% quality instead of PNG
+                    const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height],
+                        compress: true            // enable PDF compression
+                    });
+                    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height, undefined, 'FAST');
+                    pdf.save('quote.pdf');
+                }).catch(err => {
+                    alert('PDF generation failed. ' + err);
+                });
+            });
         })();
     </script>
 </body>
