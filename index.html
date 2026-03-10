@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>estimate · editable + pdf + persistence</title>
+    <!-- Roboto Mono – refined monospace -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas & jspdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #c0c0c0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            padding: 32px 16px;
+        }
+
+        /* receipt card – premium paper feel */
+        .receipt {
+            max-width: 560px;
+            width: 100%;
+            background: #ffffff;
+            color: #1e1e1e;
+            padding: 42px 38px 48px 38px;
+            border: 1px solid #b9b9b9;
+            box-shadow: 0 20px 36px -14px rgba(0, 0, 0, 0.25);
+            font-size: 13px;
+            line-height: 1.65;
+            margin-bottom: 28px;
+        }
+
+        .header {
+            margin-bottom: 38px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        .header p {
+            font-size: 0.7rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            color: #4f4f4f;
+            letter-spacing: 0.8px;
+        }
+
+        .section {
+            margin-bottom: 52px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1.8px solid #1a1a1a;
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 6px 0 5px 0;
+            border-bottom: 1px dotted #bcbcbc;
+            font-size: 0.9rem;
+        }
+
+        .desc {
+            font-weight: 350;
+            color: #2b2b2b;
+            padding-right: 24px;
+            flex: 1;
+        }
+
+        .price {
+            font-weight: 500;
+            color: #1a1a1a;
+            white-space: nowrap;
+            text-align: right;
+            font-size: 0.94rem;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 550;
+            font-size: 0.96rem;
+            padding: 10px 0 6px;
+            margin-top: 6px;
+            border-bottom: 1px dashed #7a7a7a;
+        }
+
+        .section-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 650;
+            font-size: 1.25rem;
+            padding: 18px 0 8px;
+            margin-top: 20px;
+            border-top: 3px double #1f1f1f;
+        }
+
+        .note-block {
+            font-size: 0.7rem;
+            color: #4b4b4b;
+            border-top: 1px dashed #aaa;
+            margin-top: 26px;
+            padding-top: 14px;
+            line-height: 1.7;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge {
+            background: #ececec;
+            padding: 2px 10px;
+            font-weight: 400;
+            color: #1e1e1e;
+            font-size: 0.65rem;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .grand-container {
+            margin-top: 48px;
+            border-top: 2px solid #1d1d1d;
+            padding-top: 24px;
+        }
+
+        .grand-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 650;
+            font-size: 1.7rem;
+            color: #000;
+            letter-spacing: -0.5px;
+        }
+
+        .grand-label {
+            font-size: 0.9rem;
+            font-weight: 400;
+            align-self: flex-end;
+            padding-bottom: 4px;
+            color: #3e3e3e;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            margin-top: 32px;
+            border-top: 1px solid #222;
+            padding-top: 16px;
+            font-size: 0.65rem;
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            color: #4e4e4e;
+            font-weight: 350;
+            letter-spacing: 0.2px;
+        }
+
+        [contenteditable="true"] {
+            cursor: text;
+            border-radius: 0;
+            transition: background 0.1s;
+        }
+
+        [contenteditable="true"]:hover {
+            background-color: #f4f4f4;
+        }
+
+        [contenteditable="true"]:focus {
+            outline: 1px solid #8a8a8a;
+            background-color: #fbfbfb;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0 20px;
+            max-width: 560px;
+        }
+
+        .btn {
+            background: #1c1c1c;
+            border: none;
+            color: white;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 400;
+            padding: 12px 28px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid #1c1c1c;
+            transition: 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #1c1c1c;
+        }
+
+        .btn:hover {
+            background: #3a3a3a;
+            border-color: #3a3a3a;
+            color: white;
+        }
+
+        .btn-outline:hover {
+            background: #1c1c1c;
+            color: white;
+        }
+
+        .hint {
+            font-size: 0.6rem;
+            color: #7a7a7a;
+            max-width: 560px;
+            text-align: center;
+            font-weight: 300;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- RECEIPT – every element contenteditable -->
+    <div class="receipt" id="receiptContainer">
+        <div class="header" contenteditable="true">
+            <h1>ESTIMATE · 2510</h1>
+            <p>10 march 2026  //  interior/exterior + water system</p>
+        </div>
+
+        <!-- PAINTER SECTION -->
+        <div class="section">
+            <div class="section-title" contenteditable="true">painter · screed & paint</div>
+
+            <div class="row" contenteditable="true"><span class="desc">Pop cement (6 bags) — phase 1: 5 bags</span><span class="price">₦69,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Pop paint (8 drums) — phase 1: 6 drums</span><span class="price">₦72,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Topbond (10 kg)</span><span class="price">₦31,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Smooth sandpaper (5 yards)</span><span class="price">₦5,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Masking tape (4 pcs)</span><span class="price">₦6,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Black gloss – window (1 gal)</span><span class="price">₦20,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Nylon protective sheet</span><span class="price">₦5,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">White emulsion – ceilings (6 drums)</span><span class="price">₦108,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Gloss – stair railing (½ gal)</span><span class="price">₦10,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">White satin drum (2 drums)</span><span class="price">₦130,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">White satin gallon (2)</span><span class="price">₦27,000</span></div>
+
+            <div class="total-row" contenteditable="true"><span>interior materials</span><span>₦483,000</span></div>
+
+            <div style="height: 12px;"></div>
+
+            <div class="row" contenteditable="true"><span class="desc">Beige emulsion – exterior (15 drums)</span><span class="price">₦270,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Beige emulsion – fence (6 drums)</span><span class="price">₦108,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Texture paint – fence (1 drum)</span><span class="price">₦27,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Transportation</span><span class="price">₦10,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Ladder hire (5 days)</span><span class="price">₦25,000</span></div>
+
+            <div class="total-row" contenteditable="true"><span>exterior + logistics</span><span>₦440,000</span></div>
+
+            <div class="row" contenteditable="true" style="border-bottom: none;"><span class="desc">Workmanship (labour)</span><span class="price">₦700,000</span></div>
+
+            <div class="section-total" contenteditable="true"><span>painter total</span><span>₦1,623,000</span></div>
+
+            <div class="note-block" contenteditable="true">
+                <span class="badge" contenteditable="true">painter note</span> pop cement/paint phased · ladder 5 days included
+            </div>
+        </div>
+
+        <!-- PLUMBER SECTION -->
+        <div class="section">
+            <div class="section-title" contenteditable="true">plumber · connectors & treatment</div>
+
+            <div class="row" contenteditable="true"><span class="desc">Flexible connector (15)</span><span class="price">₦37,500</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Tee tap (15)</span><span class="price">₦37,500</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Palm connector (5)</span><span class="price">₦32,500</span></div>
+            <div class="row" contenteditable="true"><span class="desc">M/F socket (20)</span><span class="price">₦4,000</span></div>
+            <div class="row" contenteditable="true"><span class="desc">Shower (2)</span><span class="price">₦30,000</span></div>
+
+            <div class="total-row" contenteditable="true"><span>connectors subtotal</span><span>₦141,500</span></div>
+
+            <div style="margin-top: 26px;"></div>
+
+            <div class="row" contenteditable="true"><span class="desc">Geepee tank 2000L</span><span class="price"></span></div>
+            <div class="row" contenteditable="true"><span class="desc">Geepee tank 1200L</span><span class="price"></span></div>
+            <div class="row" contenteditable="true"><span class="desc">Fibers / medias / chemicals</span><span class="price"></span></div>
+            <div class="row" contenteditable="true" style="border-bottom: none; font-weight: 500;"><span class="desc">treatment package (lump sum)</span><span class="price">₦1,815,000</span></div>
+
+            <div class="section-total" contenteditable="true" style="margin-top: 26px;"><span>plumber total</span><span>₦1,956,500</span></div>
+
+            <div class="note-block" contenteditable="true">
+                <span class="badge" contenteditable="true">plumber note</span> all connectors & treatment as specified
+            </div>
+        </div>
+
+        <!-- GRAND TOTAL -->
+        <div class="grand-container">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 8px;" contenteditable="true">
+                <span>painter</span><span>₦1,623,000</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 16px;" contenteditable="true">
+                <span>plumber</span><span>₦1,956,500</span>
+            </div>
+            <div class="grand-row" contenteditable="true">
+                <span class="grand-label" contenteditable="true">grand total</span>
+                <span>₦3,579,500</span>
+            </div>
+        </div>
+
+        <div class="footer" contenteditable="true">
+            <span>ref: est#2510</span>
+            <span>10 march 2026</span>
+            <span>contractor copy</span>
+        </div>
+    </div>
+
+    <!-- buttons -->
+    <div class="btn-group">
+        <button class="btn" id="previewBtn">screenshot preview</button>
+        <button class="btn btn-outline" id="pdfBtn">save as PDF</button>
+        <button class="btn btn-outline" id="resetBtn">reset to default</button>
+    </div>
+
+    <div class="hint">every text block is editable — changes are saved automatically. PDF downloads directly.</div>
+
+    <script>
+        (function() {
+            const receipt = document.getElementById('receiptContainer');
+            const STORAGE_KEY = 'persistentEstimate';
+
+            // ---------- persistence: save on input ----------
+            function saveEdits() {
+                const html = receipt.innerHTML;
+                localStorage.setItem(STORAGE_KEY, html);
+            }
+
+            // debounce to avoid too many writes
+            let timeout;
+            receipt.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(saveEdits, 300);
+            });
+
+            // load from localStorage
+            function loadSaved() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    receipt.innerHTML = saved;
+                }
+            }
+
+            // reset to default (original layout)
+            function resetToDefault() {
+                localStorage.removeItem(STORAGE_KEY);
+                window.location.reload(); // simplest: reload to original HTML
+            }
+
+            // call load on page load
+            window.addEventListener('load', loadSaved);
+
+            // ---------- capture canvas (with better font rendering) ----------
+            function captureCanvas() {
+                // small delay to ensure any pending layout changes settle
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        html2canvas(receipt, {
+                            scale: 2.2,
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            allowTaint: false,
+                            useCORS: true,
+                            windowWidth: receipt.scrollWidth,
+                            onclone: (clonedDoc, element) => {
+                                // force Roboto Mono in cloned copy
+                                const style = clonedDoc.createElement('style');
+                                style.innerHTML = `* { font-family: 'Roboto Mono', monospace !important; }`;
+                                clonedDoc.head.appendChild(style);
+                            }
+                        }).then(resolve).catch(reject);
+                    }, 100);
+                });
+            }
+
+            // preview screenshot
+            document.getElementById('previewBtn').addEventListener('click', () => {
+                captureCanvas().then(canvas => {
+                    const image = canvas.toDataURL('image/png');
+                    const newWindow = window.open('', '_blank');
+                    newWindow.document.write(`
+                        <html><head><title>estimate preview</title>
+                        <style>body { margin:0; display:flex; justify-content:center; background:#e2e2e2; }</style>
+                        </head><body>
+                        <img src="${image}" style="max-width:100%; box-shadow:0 8px 20px rgba(0,0,0,0.2);">
+                        </body></html>
+                    `);
+                }).catch(err => {
+                    alert('Preview failed. You can still take a manual screenshot.');
+                });
+            });
+
+            // save as PDF (direct download)
+            document.getElementById('pdfBtn').addEventListener('click', () => {
+                captureCanvas().then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+
+                    // PDF size = canvas dimensions (points = pixels * 0.75 approximately, but we set exact)
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+
+                    // create PDF with exact canvas dimensions (using px unit)
+                    const pdf = new jsPDF({
+                        orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
+                        unit: 'px',
+                        format: [imgWidth, imgHeight]
+                    });
+
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+                    pdf.save('estimate_2510.pdf');
+                }).catch(err => {
+                    alert('PDF generation failed. Please try again or screenshot manually.');
+                });
+            });
+
+            // reset button
+            document.getElementById('resetBtn').addEventListener('click', resetToDefault);
+        })();
+    </script>
+</body>
+</html>
