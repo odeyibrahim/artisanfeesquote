@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Quote Builder · Optimised PDF</title>
-    <!-- Roboto Mono -->
+    <title>estimate · pro + admin + share · painter & plumber</title>
+    <!-- Roboto Mono – refined monospace -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- html2canvas & jspdf -->
+    <!-- html2canvas for screenshot, jspdf for pdf generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* same styles as before – omitted for brevity, but included in full code below */
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background: #c0c0c0;
             display: flex;
@@ -21,9 +25,11 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            font-family: 'Roboto Mono', monospace;
-            padding: 24px 16px;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            padding: 32px 16px;
         }
+
+        /* Control bar from v1 */
         .control-bar {
             max-width: 560px;
             width: 100%;
@@ -38,26 +44,31 @@
             justify-content: space-between;
             gap: 12px;
         }
+        
         .toggle-container {
             display: flex;
             align-items: center;
             gap: 12px;
         }
+        
         .toggle-switch {
             position: relative;
             display: inline-block;
             width: 52px;
             height: 26px;
         }
-        .toggle-switch input { opacity:0; width:0; height:0; }
+        
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        
         .slider {
             position: absolute;
             cursor: pointer;
-            top:0; left:0; right:0; bottom:0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-color: #aaa;
             transition: 0.2s;
             border-radius: 26px;
         }
+        
         .slider:before {
             position: absolute;
             content: "";
@@ -69,38 +80,62 @@
             transition: 0.2s;
             border-radius: 50%;
         }
+        
         input:checked + .slider { background-color: #1c1c1c; }
         input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Button styles */
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
 
         .btn {
             background: #1c1c1c;
             border: none;
             color: white;
             font-family: 'Roboto Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 400;
-            padding: 8px 16px;
+            padding: 8px 12px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             cursor: pointer;
             border: 1px solid #1c1c1c;
             transition: 0.15s;
-            border-radius: 0;
+            border-radius: 4px;
+            white-space: nowrap;
         }
+
         .btn-outline {
             background: transparent;
             color: #1c1c1c;
         }
+
         .btn:hover {
             background: #3a3a3a;
             border-color: #3a3a3a;
             color: white;
         }
+
         .btn-outline:hover {
             background: #1c1c1c;
             color: white;
         }
 
+        .btn-share {
+            background: #0066cc;
+            border-color: #0066cc;
+        }
+        
+        .btn-share:hover {
+            background: #0052a3;
+            border-color: #0052a3;
+        }
+
+        /* receipt card – premium paper feel */
         .receipt {
             max-width: 560px;
             width: 100%;
@@ -113,103 +148,274 @@
             line-height: 1.65;
             margin-bottom: 28px;
         }
+
         .header {
             margin-bottom: 38px;
             border-bottom: 1px solid #222;
             padding-bottom: 16px;
         }
-        .header h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.5px; color: #000; }
-        .header p { font-size: 0.7rem; font-weight: 300; text-transform: uppercase; color: #4f4f4f; }
 
-        .section { margin-bottom: 42px; }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        .header p {
+            font-size: 0.7rem;
+            font-weight: 300;
+            text-transform: uppercase;
+            color: #4f4f4f;
+            letter-spacing: 0.8px;
+        }
+
+        .section {
+            margin-bottom: 52px;
+            position: relative;
+        }
+
         .section-title {
-            font-weight: 600; font-size: 1.1rem; text-transform: uppercase;
-            border-bottom: 1.8px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 16px;
-            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1.8px solid #1a1a1a;
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .section-title .section-controls { display: flex; gap: 8px; }
+        
+        .section-controls {
+            display: flex;
+            gap: 8px;
+        }
 
+        /* rows */
         .row {
-            display: flex; justify-content: space-between; align-items: baseline;
-            padding: 6px 0 5px; border-bottom: 1px dotted #bcbcbc; font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 6px 0 5px 0;
+            border-bottom: 1px dotted #bcbcbc;
+            font-size: 0.9rem;
+            position: relative;
         }
-        .desc { font-weight: 350; color: #2b2b2b; padding-right: 16px; flex: 1; }
-        .price { font-weight: 500; color: #1a1a1a; white-space: nowrap; }
+
+        .desc {
+            font-weight: 350;
+            color: #2b2b2b;
+            padding-right: 24px;
+            flex: 1;
+        }
+
+        .price {
+            font-weight: 500;
+            color: #1a1a1a;
+            white-space: nowrap;
+            text-align: right;
+            font-size: 0.94rem;
+        }
+        
         .row-remove {
-            margin-left: 10px; color: #aa2222; cursor: pointer; font-weight: bold;
-            font-size: 1.1rem; user-select: none;
+            margin-left: 10px;
+            color: #aa2222;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            user-select: none;
+            display: none;
         }
+        
         .row-remove:hover { color: #ff0000; }
+        
+        body.admin-mode .row-remove { display: inline; }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 550;
+            font-size: 0.96rem;
+            padding: 10px 0 6px;
+            margin-top: 6px;
+            border-bottom: 1px dashed #7a7a7a;
+            background-color: #f9f9f9;
+        }
 
         .section-total {
-            display: flex; justify-content: space-between; font-weight: 650;
-            font-size: 1.1rem; padding: 12px 0 4px; margin-top: 8px; border-top: 2px solid #444;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 650;
+            font-size: 1.25rem;
+            padding: 18px 0 8px;
+            margin-top: 20px;
+            border-top: 3px double #1f1f1f;
         }
 
         .note-block {
-            font-size: 0.7rem; color: #4b4b4b; border-top: 1px dashed #aaa;
-            margin-top: 20px; padding-top: 12px; line-height: 1.7;
-            display: flex; flex-wrap: wrap; gap: 8px;
-        }
-        .badge {
-            background: #ececec; padding: 2px 10px; font-weight: 400;
-            color: #1e1e1e; font-size: 0.65rem; letter-spacing: 0.3px; text-transform: uppercase;
+            font-size: 0.7rem;
+            color: #4b4b4b;
+            border-top: 1px dashed #aaa;
+            margin-top: 26px;
+            padding-top: 14px;
+            line-height: 1.7;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
-        .grand-container { margin-top: 40px; border-top: 2px solid #1d1d1d; padding-top: 20px; }
-        .grand-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.6rem; color: #000; }
-        .grand-label { font-size: 0.9rem; font-weight: 400; align-self: flex-end; color: #3e3e3e; text-transform: uppercase; }
+        .badge {
+            background: #ececec;
+            padding: 2px 10px;
+            font-weight: 400;
+            color: #1e1e1e;
+            font-size: 0.65rem;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .grand-container {
+            margin-top: 48px;
+            border-top: 2px solid #1d1d1d;
+            padding-top: 24px;
+        }
+
+        .grand-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 650;
+            font-size: 1.7rem;
+            color: #000;
+            letter-spacing: -0.5px;
+        }
+
+        .grand-label {
+            font-size: 0.9rem;
+            font-weight: 400;
+            align-self: flex-end;
+            padding-bottom: 4px;
+            color: #3e3e3e;
+            text-transform: uppercase;
+        }
 
         .footer {
-            margin-top: 28px; border-top: 1px solid #222; padding-top: 14px;
-            font-size: 0.65rem; display: flex; justify-content: space-between;
-            text-transform: uppercase; color: #4e4e4e; font-weight: 350;
+            margin-top: 32px;
+            border-top: 1px solid #222;
+            padding-top: 16px;
+            font-size: 0.65rem;
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            color: #4e4e4e;
+            font-weight: 350;
+            letter-spacing: 0.2px;
         }
 
-        .add-section-btn { width: 100%; text-align: center; margin: 16px 0 8px; }
+        /* editable indication */
+        [contenteditable="true"] {
+            cursor: text;
+            border-radius: 0;
+            transition: background 0.1s;
+        }
 
-        /* view mode hides admin controls */
-        body:not(.admin-mode) .admin-control,
-        body:not(.admin-mode) .row-remove,
-        body:not(.admin-mode) .section-controls,
-        body:not(.admin-mode) .add-section-btn {
-            display: none !important;
+        [contenteditable="true"]:hover {
+            background-color: #f4f4f4;
         }
-        body:not(.admin-mode) [contenteditable="true"] {
-            contenteditable: false;
-            pointer-events: none;
-            background: transparent;
+
+        [contenteditable="true"]:focus {
+            outline: 1px solid #8a8a8a;
+            background-color: #fbfbfb;
         }
-        [contenteditable="true"]:hover { background-color: #f4f4f4; }
-        [contenteditable="true"]:focus { outline: 1px solid #8a8a8a; background-color: #fbfbfb; }
+        
+        /* Admin-only elements */
+        .admin-control {
+            display: none;
+        }
+        
+        body.admin-mode .admin-control {
+            display: flex;
+            gap: 8px;
+        }
+        
+        body.admin-mode .add-section-btn {
+            display: block;
+        }
+        
+        .add-section-btn {
+            width: 100%;
+            text-align: center;
+            margin: 16px 0 8px;
+            display: none;
+        }
+
+        .hint {
+            font-size: 0.6rem;
+            color: #7a7a7a;
+            max-width: 560px;
+            text-align: center;
+            font-weight: 300;
+            margin-top: 4px;
+        }
+        
+        .ios-hint {
+display: none;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 0.7rem;
+            max-width: 560px;
+        }
     </style>
 </head>
 <body>
+    <!-- iOS hint for Koder users -->
+    <div class="ios-hint" id="iosHint">
+        📱 <strong>iOS Koder:</strong> Use Share button for Messages/Mail/Files • Preview to save image • Open in Safari for full PDF download
+    </div>
+
+    <!-- Control bar with admin toggle and share buttons -->
     <div class="control-bar">
         <div class="toggle-container">
-            <span style="font-size:0.8rem;">👤 View</span>
+            <span style="font-size:0.8rem;">View</span>
             <label class="toggle-switch">
                 <input type="checkbox" id="adminToggle">
                 <span class="slider"></span>
             </label>
-            <span style="font-size:0.8rem;">⚙️ Admin</span>
+            <span style="font-size:0.8rem;">Admin</span>
         </div>
-        <div>
-            <button class="btn" id="pdfBtn">Save as PDF</button>
+        
+        <div class="btn-group">
+            <button class="btn" id="previewPNG">Preview</button>
+            <button class="btn btn-outline" id="copyBtn">📋 Copy</button>
+            <button class="btn btn-share" id="shareBtn">📤 Share PDF</button>
+            <button class="btn btn-outline" id="savePDF">💾 Save</button>
         </div>
     </div>
 
-    <div id="receiptContainer" class="receipt"></div>
+    <!-- RECEIPT – DYNAMICALLY GENERATED -->
+    <div class="receipt" id="receiptContainer"></div>
+
+    <div class="hint">admin mode enables add/delete · click any text to edit · auto-saves</div>
 
     <script>
         (function() {
-            // Default quote data (same as before)
+            // Initial data with v2's detailed breakdown structure
             let quoteData = {
-                header: { h1: "ESTIMATE · 2510", p: "10 march 2026  //  interior/exterior + water system" },
+                header: { 
+                    h1: "ESTIMATE · 2510", 
+                    p: "10 march 2026  //  interior/exterior + water system" 
+                },
                 sections: [
                     {
                         title: "painter · screed & paint",
                         items: [
+                            // Interior materials group
                             { desc: "Pop cement (6 bags) — phase 1: 5 bags", price: 69000 },
                             { desc: "Pop paint (8 drums) — phase 1: 6 drums", price: 72000 },
                             { desc: "Topbond (10 kg)", price: 31000 },
@@ -221,11 +427,15 @@
                             { desc: "Gloss – stair railing (½ gal)", price: 10000 },
                             { desc: "White satin drum (2 drums)", price: 130000 },
                             { desc: "White satin gallon (2)", price: 27000 },
+                            // Interior subtotal row (special item type)
+                            { desc: "SUB:interior materials", price: 483000, isSubtotal: true },
+                            // Exterior + logistics
                             { desc: "Beige emulsion – exterior (15 drums)", price: 270000 },
                             { desc: "Beige emulsion – fence (6 drums)", price: 108000 },
                             { desc: "Texture paint – fence (1 drum)", price: 27000 },
                             { desc: "Transportation", price: 10000 },
                             { desc: "Ladder hire (5 days)", price: 25000 },
+                            { desc: "SUB:exterior + logistics", price: 440000, isSubtotal: true },
                             { desc: "Workmanship (labour)", price: 700000 }
                         ],
                         note: "pop cement/paint phased · ladder 5 days included"
@@ -233,11 +443,14 @@
                     {
                         title: "plumber · connectors & treatment",
                         items: [
+                            // Connectors group
                             { desc: "Flexible connector (15)", price: 37500 },
                             { desc: "Tee tap (15)", price: 37500 },
                             { desc: "Palm connector (5)", price: 32500 },
                             { desc: "M/F socket (20)", price: 4000 },
                             { desc: "Shower (2)", price: 30000 },
+                            { desc: "SUB:connectors subtotal", price: 141500, isSubtotal: true },
+                            // Treatment group
                             { desc: "Geepee tank 2000L", price: 0 },
                             { desc: "Geepee tank 1200L", price: 0 },
                             { desc: "Fibers / medias / chemicals", price: 0 },
@@ -246,29 +459,53 @@
                         note: "all connectors & treatment as specified"
                     }
                 ],
-                footer: { left: "ref: est#2510", center: "10 march 2026", right: "contractor copy" }
+                footer: { 
+                    left: "ref: est#2510", 
+                    center: "10 march 2026", 
+                    right: "contractor copy" 
+                }
             };
 
-            const STORAGE_KEY = 'quoteBuilderState';
+            // Load from localStorage
+            const STORAGE_KEY = 'quoteBuilderEnhanced';
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) { try { quoteData = JSON.parse(saved); } catch(e) {} }
+            if (saved) {
+                try { 
+                    quoteData = JSON.parse(saved); 
+                } catch(e) {}
+            }
 
             const receiptEl = document.getElementById('receiptContainer');
             const body = document.body;
 
-            function formatPrice(num) { return '₦' + num.toLocaleString('en-NG'); }
+            function formatPrice(num) { 
+                return '₦' + num.toLocaleString('en-NG'); 
+            }
+
+            function calculateSectionTotal(items) {
+                return items.reduce((sum, it) => {
+                    if (it.isSubtotal) return sum;
+                    return sum + (it.price || 0);
+                }, 0);
+            }
 
             function render() {
                 const isAdmin = body.classList.contains('admin-mode');
                 let html = '';
 
-                // header
-                html += `<div class="header"><h1 contenteditable="${isAdmin}">${quoteData.header.h1}</h1><p contenteditable="${isAdmin}">${quoteData.header.p}</p></div>`;
+                // Header
+                html += `<div class="header">`;
+                html += `<h1 contenteditable="${isAdmin}">${quoteData.header.h1}</h1>`;
+                html += `<p contenteditable="${isAdmin}">${quoteData.header.p}</p>`;
+                html += `</div>`;
 
-                // sections
+                // Sections
                 quoteData.sections.forEach((section, secIdx) => {
                     html += `<div class="section" data-section-index="${secIdx}">`;
-                    html += `<div class="section-title"><span contenteditable="${isAdmin}">${section.title}</span>`;
+                    
+                    // Section title with admin controls
+                    html += `<div class="section-title">`;
+                    html += `<span contenteditable="${isAdmin}">${section.title}</span>`;
                     if (isAdmin) {
                         html += `<span class="section-controls admin-control">`;
                         html += `<button class="btn btn-outline add-item-btn" data-section="${secIdx}" style="padding:4px 8px;">+ item</button>`;
@@ -277,169 +514,346 @@
                     }
                     html += `</div>`;
 
+                    // Items
                     section.items.forEach((item, itemIdx) => {
-                        html += `<div class="row" data-item-index="${itemIdx}">`;
-                        html += `<span class="desc" contenteditable="${isAdmin}">${item.desc}</span>`;
-                        html += `<span class="price" contenteditable="${isAdmin}">${formatPrice(item.price)}</span>`;
-                        if (isAdmin) html += `<span class="row-remove admin-control" data-section="${secIdx}" data-item="${itemIdx}">✕</span>`;
+                        const isSubtotal = item.isSubtotal;
+                        const rowClass = isSubtotal ? 'total-row' : 'row';
+                        
+                        html += `<div class="${rowClass}" data-item-index="${itemIdx}" data-is-subtotal="${isSubtotal || false}">`;
+                        
+                        if (isSubtotal) {
+                            const label = item.desc.replace('SUB:', '');
+                            html += `<span contenteditable="${isAdmin}">${label}</span>`;
+                            html += `<span class="price" contenteditable="${isAdmin}">${formatPrice(item.price)}</span>`;
+                        } else {
+                            html += `<span class="desc" contenteditable="${isAdmin}">${item.desc}</span>`;
+                            html += `<span class="price" contenteditable="${isAdmin}">${formatPrice(item.price)}</span>`;
+                        }
+                        
+                        if (isAdmin && !isSubtotal) {
+                            html += `<span class="row-remove admin-control" data-section="${secIdx}" data-item="${itemIdx}">✕</span>`;
+                        }
+                        
                         html += `</div>`;
                     });
 
-                    const secTotal = section.items.reduce((sum, it) => sum + it.price, 0);
-                    html += `<div class="section-total"><span>section total</span><span>${formatPrice(secTotal)}</span></div>`;
-                    html += `<div class="note-block" contenteditable="${isAdmin}"><span class="badge">${section.title} note</span><span contenteditable="${isAdmin}">${section.note}</span></div>`;
+                    // Section total
+                    const secTotal = calculateSectionTotal(section.items);
+                    html += `<div class="section-total">`;
+                    html += `<span contenteditable="${isAdmin}">${section.title} total</span>`;
+                    html += `<span>${formatPrice(secTotal)}</span>`;
+                    html += `</div>`;
+
+                    // Note block
+                    html += `<div class="note-block">`;
+                    html += `<span class="badge" contenteditable="${isAdmin}">${section.title} note</span>`;
+                    html += `<span contenteditable="${isAdmin}">${section.note}</span>`;
+                    html += `</div>`;
+
                     html += `</div>`;
                 });
 
+                // Add section button (admin only)
                 if (isAdmin) {
-                    html += `<div class="add-section-btn admin-control"><button class="btn" id="addSectionBtn">+ add new section</button></div>`;
+                    html += `<div class="add-section-btn admin-control">`;
+                    html += `<button class="btn" id="addSectionBtn">+ add new trade section</button>`;
+                    html += `</div>`;
                 }
 
-                const grandTotal = quoteData.sections.reduce((sum, sec) => sum + sec.items.reduce((s, it) => s + it.price, 0), 0);
+                // Grand total area
+                const painterTotal = calculateSectionTotal(quoteData.sections[0].items);
+                const plumberTotal = calculateSectionTotal(quoteData.sections[1].items);
+                const grandTotal = painterTotal + plumberTotal;
+
                 html += `<div class="grand-container">`;
-                quoteData.sections.forEach((sec, i) => {
-                    const secSum = sec.items.reduce((s, it) => s + it.price, 0);
-                    html += `<div style="display:flex;justify-content:space-between;font-size:0.9rem;color:#333;margin-bottom:6px;" contenteditable="${isAdmin}"><span>${sec.title} total</span><span>${formatPrice(secSum)}</span></div>`;
-                });
-                html += `<div class="grand-row" contenteditable="${isAdmin}"><span class="grand-label">grand total</span><span>${formatPrice(grandTotal)}</span></div>`;
+                html += `<div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 8px;" contenteditable="${isAdmin}">`;
+                html += `<span>painter</span><span>${formatPrice(painterTotal)}</span>`;
+                html += `</div>`;
+                html += `<div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 16px;" contenteditable="${isAdmin}">`;
+                html += `<span>plumber</span><span>${formatPrice(plumberTotal)}</span>`;
+                html += `</div>`;
+                html += `<div class="grand-row" contenteditable="${isAdmin}">`;
+                html += `<span class="grand-label" contenteditable="${isAdmin}">grand total</span>`;
+                html += `<span>${formatPrice(grandTotal)}</span>`;
+                html += `</div>`;
                 html += `</div>`;
 
-                html += `<div class="footer"><span contenteditable="${isAdmin}">${quoteData.footer.left}</span><span contenteditable="${isAdmin}">${quoteData.footer.center}</span><span contenteditable="${isAdmin}">${quoteData.footer.right}</span></div>`;
+                // Footer
+                html += `<div class="footer">`;
+                html += `<span contenteditable="${isAdmin}">${quoteData.footer.left}</span>`;
+                html += `<span contenteditable="${isAdmin}">${quoteData.footer.center}</span>`;
+                html += `<span contenteditable="${isAdmin}">${quoteData.footer.right}</span>`;
+                html += `</div>`;
 
                 receiptEl.innerHTML = html;
 
                 if (isAdmin) attachAdminListeners();
+                attachSaveListeners();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteData));
             }
 
             function attachAdminListeners() {
-                // Remove item
                 document.querySelectorAll('.row-remove').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const secIdx = btn.dataset.section;
                         const itemIdx = btn.dataset.item;
                         if (secIdx !== undefined && itemIdx !== undefined) {
+                            const item = quoteData.sections[secIdx].items[itemIdx];
+                            if (item && item.isSubtotal) {
+                                alert('Subtotal rows cannot be deleted.');
+                                return;
+                            }
                             quoteData.sections[secIdx].items.splice(itemIdx, 1);
-                            saveAndRender();
+                            render();
                         }
                     });
                 });
 
-                // Add item
                 document.querySelectorAll('.add-item-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const secIdx = btn.dataset.section;
                         if (secIdx !== undefined) {
                             quoteData.sections[secIdx].items.push({ desc: 'new item', price: 0 });
-                            saveAndRender();
+                            render();
                         }
                     });
                 });
 
-                // Remove section
                 document.querySelectorAll('.remove-section-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const secIdx = btn.dataset.section;
                         if (secIdx !== undefined && quoteData.sections.length > 1) {
                             quoteData.sections.splice(secIdx, 1);
-                            saveAndRender();
-                        } else alert('Cannot delete the only section.');
+                            render();
+                        } else {
+                            alert('Cannot delete the only section.');
+                        }
                     });
                 });
 
-                // Add section
                 const addSec = document.getElementById('addSectionBtn');
-                if (addSec) addSec.addEventListener('click', () => {
-                    quoteData.sections.push({ title: 'new section', items: [{ desc: 'new item', price: 0 }], note: 'add notes here' });
-                    saveAndRender();
-                });
+                if (addSec) {
+                    addSec.addEventListener('click', () => {
+                        quoteData.sections.push({ 
+                            title: 'new trade', 
+                            items: [{ desc: 'new item', price: 0 }], 
+                            note: 'add notes here' 
+                        });
+                        render();
+                    });
+                }
+            }
 
-                // Contenteditable blur saving
+            function attachSaveListeners() {
                 receiptEl.querySelectorAll('[contenteditable="true"]').forEach(field => {
                     field.addEventListener('blur', function() {
-                        const parentRow = this.closest('.row');
+                        const parentRow = this.closest('.row, .total-row');
+                        
                         if (parentRow) {
                             const secIdx = parentRow.closest('.section')?.dataset.sectionIndex;
                             const itemIdx = parentRow.dataset.itemIndex;
+                            const isSubtotal = parentRow.dataset.isSubtotal === 'true';
+                            
                             if (secIdx !== undefined && itemIdx !== undefined) {
-                                if (this.classList.contains('desc')) {
-                                    quoteData.sections[secIdx].items[itemIdx].desc = this.innerText.trim();
+                                const item = quoteData.sections[secIdx].items[itemIdx];
+                                
+                                if (this.classList.contains('desc') || parentRow.classList.contains('total-row')) {
+                                    if (isSubtotal) {
+                                        item.desc = 'SUB:' + this.innerText.trim();
+                                    } else {
+                                        item.desc = this.innerText.trim();
+                                    }
                                 } else if (this.classList.contains('price')) {
                                     const raw = this.innerText.replace(/[₦,]/g, '').trim();
-                                    quoteData.sections[secIdx].items[itemIdx].price = parseFloat(raw) || 0;
+                                    item.price = parseFloat(raw) || 0;
                                 }
                             }
                         } else {
-                            // header, section title, note, footer
-                            if (this.closest('.header')?.querySelector('h1') === this) quoteData.header.h1 = this.innerText.trim();
-                            if (this.closest('.header')?.querySelector('p') === this) quoteData.header.p = this.innerText.trim();
+                            if (this.closest('.header')) {
+                                if (this.tagName === 'H1') {
+                                    quoteData.header.h1 = this.innerText.trim();
+                                } else if (this.tagName === 'P') {
+                                    quoteData.header.p = this.innerText.trim();
+                                }
+                            }
 
                             const sectionTitle = this.closest('.section-title')?.querySelector('span:first-child');
                             if (sectionTitle === this) {
                                 const secDiv = this.closest('.section');
-                                if (secDiv) quoteData.sections[secDiv.dataset.sectionIndex].title = this.innerText.trim();
+                                if (secDiv) {
+                                    quoteData.sections[secDiv.dataset.sectionIndex].title = this.innerText.trim();
+                                }
                             }
 
                             const noteBlock = this.closest('.note-block');
                             if (noteBlock && this !== noteBlock.querySelector('.badge')) {
                                 const secDiv = this.closest('.section');
-                                if (secDiv) quoteData.sections[secDiv.dataset.sectionIndex].note = this.innerText.trim();
+                                if (secDiv) {
+                                    quoteData.sections[secDiv.dataset.sectionIndex].note = this.innerText.trim();
+                                }
                             }
 
                             const footerSpans = this.closest('.footer')?.querySelectorAll('span');
-                            if (footerSpans) {
+                            if (footerSpans && footerSpans.length >= 3) {
                                 quoteData.footer.left = footerSpans[0]?.innerText.trim() || quoteData.footer.left;
                                 quoteData.footer.center = footerSpans[1]?.innerText.trim() || quoteData.footer.center;
                                 quoteData.footer.right = footerSpans[2]?.innerText.trim() || quoteData.footer.right;
                             }
                         }
+                        
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteData));
                     });
                 });
             }
 
-            function saveAndRender() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteData));
-                render();
-            }
-
-            // Toggle admin mode
-            const toggle = document.getElementById('adminToggle');
-            toggle.addEventListener('change', (e) => {
-                if (e.target.checked) body.classList.add('admin-mode');
-                else body.classList.remove('admin-mode');
-                render();
-            });
-
-            render();
-            body.classList.remove('admin-mode');
-            toggle.checked = false;
-
-            // ---------- OPTIMISED PDF EXPORT ----------
-            document.getElementById('pdfBtn').addEventListener('click', function() {
-                const element = document.getElementById('receiptContainer');
-                html2canvas(element, {
-                    scale: 1.5,                 // lower scale = smaller file
+            // Capture canvas helper
+            async function captureCanvas() {
+                return await html2canvas(receiptEl, {
+                    scale: 2.2,
                     backgroundColor: '#ffffff',
                     logging: false,
                     allowTaint: false,
                     useCORS: true,
-                }).then(canvas => {
-                    // Use JPEG with 80% quality instead of PNG
-                    const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                    windowWidth: receiptEl.scrollWidth,
+                });
+            }
+
+            // ========== SHARE FUNCTIONS ==========
+            
+            // 1. Preview button
+            document.getElementById('previewPNG').addEventListener('click', () => {
+                captureCanvas().then(canvas => {
+                    const image = canvas.toDataURL('image/png');
+                    const newWindow = window.open('', '_blank');
+                    newWindow.document.write(`
+                        <html>
+                        <head><title>estimate preview</title>
+                        <style>
+                            body { margin:0; display:flex; justify-content:center; background:#e2e2e2; }
+                            img { max-width:100%; box-shadow:0 8px 20px rgba(0,0,0,0.2); }
+                        </style>
+                        </head>
+                        <body>
+                        <img src="${image}" alt="estimate preview">
+                        </body>
+                        </html>
+                    `);
+                }).catch(() => alert('Screenshot failed'));
+            });
+
+            // 2. Copy to clipboard (text)
+            document.getElementById('copyBtn').addEventListener('click', () => {
+                const text = receiptEl.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✓ Quote copied to clipboard! You can paste into Notes, Mail, or Messages');
+                }).catch(() => {
+                    // Fallback
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('✓ Quote copied!');
+                });
+            });
+
+            // 3. SHARE PDF BUTTON - This is what you asked for!
+            document.getElementById('shareBtn').addEventListener('click', async () => {
+                try {
+                    const canvas = await captureCanvas();
+                    
+                    // Convert canvas to blob for sharing
+                    canvas.toBlob(async (blob) => {
+                        // Create a File object
+                        const file = new File([blob], 'estimate.pdf', { 
+                            type: 'application/pdf' 
+                        });
+                        
+                        // Check if Web Share API is available with files
+                        if (navigator.share && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share({
+                                    title: 'Construction Estimate',
+                                    text: 'Painter & Plumber Quote',
+                                    files: [file]
+                                });
+                                console.log('Shared successfully');
+                            } catch (shareError) {
+                                console.log('Share cancelled or failed');
+                                // Fallback to PDF download
+                                fallbackPDF();
+                            }
+                        } else {
+                            // Web Share not supported, try PDF download
+                            fallbackPDF();
+                        }
+                    }, 'application/pdf');
+                    
+                } catch (error) {
+                    console.error('Share failed:', error);
+                    alert('Sharing failed. Trying PDF download instead...');
+                    fallbackPDF();
+                }
+            });
+
+            // 4. Save PDF button
+            document.getElementById('savePDF').addEventListener('click', fallbackPDF);
+
+            // Helper function for PDF generation
+            async function fallbackPDF() {
+                try {
+                    const canvas = await captureCanvas();
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
                     const { jsPDF } = window.jspdf;
+                    
                     const pdf = new jsPDF({
                         orientation: 'portrait',
                         unit: 'px',
-                        format: [canvas.width, canvas.height],
-                        compress: true            // enable PDF compression
+                        format: [canvas.width, canvas.height]
                     });
+                    
                     pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height, undefined, 'FAST');
-                    pdf.save('quote.pdf');
-                }).catch(err => {
-                    alert('PDF generation failed. ' + err);
-                });
+                    
+                    // Try to save
+                    pdf.save('estimate.pdf');
+                    
+                    // For iOS, also offer alternative
+                    if (navigator.userAgent.match(/iPad|iPhone|iPod/i)) {
+                        setTimeout(() => {
+                            if (!confirm('PDF download initiated. If file doesnt appear, use Share button instead.')) {
+                                // Open in new tab as fallback
+                                window.open(imgData, '_blank');
+                            }
+                        }, 1000);
+                    }
+                } catch (error) {
+                    console.error('PDF failed:', error);
+                    alert('PDF generation failed. Use Preview or Copy instead.');
+                }
+            }
+
+            // Admin toggle
+            const toggle = document.getElementById('adminToggle');
+            toggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    body.classList.add('admin-mode');
+                } else {
+                    body.classList.remove('admin-mode');
+                }
+                render();
             });
+
+            // Hide iOS hint if not on iOS
+            if (!navigator.userAgent.match(/iPad|iPhone|iPod/i)) {
+                document.getElementById('iosHint').style.display = 'none';
+            }
+
+            // Initial render
+            body.classList.remove('admin-mode');
+            toggle.checked = false;
+            render();
         })();
     </script>
 </body>
