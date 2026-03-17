@@ -134,6 +134,16 @@
             background: #0052a3;
             border-color: #0052a3;
         }
+        
+        .btn-warning {
+            background: #cc7a00;
+            border-color: #cc7a00;
+        }
+        
+        .btn-warning:hover {
+            background: #b36b00;
+            border-color: #b36b00;
+        }
 
         /* receipt card – premium paper feel */
         .receipt {
@@ -371,6 +381,26 @@
             font-size: 0.7rem;
             max-width: 560px;
         }
+        
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1c1c1c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast-message.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -395,18 +425,22 @@
             <button class="btn btn-outline" id="copyBtn">📋 Copy</button>
             <button class="btn btn-share" id="shareBtn">📤 Share PDF</button>
             <button class="btn btn-outline" id="savePDF">💾 Save</button>
+            <button class="btn btn-warning" id="refreshBtn">⟲ Reset</button>
         </div>
     </div>
 
     <!-- RECEIPT – DYNAMICALLY GENERATED -->
     <div class="receipt" id="receiptContainer"></div>
 
-    <div class="hint">admin mode enables add/delete · click any text to edit · auto-saves</div>
+    <div class="hint">admin mode enables add/delete · click any text to edit · auto-saves · reset button clears storage</div>
+    
+    <!-- Toast notification -->
+    <div class="toast-message" id="toast"></div>
 
     <script>
         (function() {
-            // Initial data with painter, plumber, and two carpenter sections
-            let quoteData = {
+            // Master template - this is the source of truth for the default layout
+            const MASTER_TEMPLATE = {
                 header: { 
                     h1: "ESTIMATE · 2703", 
                     p: "17 march 2026  //  interior/exterior + water system + carpentry"
@@ -508,17 +542,42 @@
                 }
             };
 
-            // Load from localStorage
+            // Initialize quoteData from localStorage or use master template
+            let quoteData = JSON.parse(JSON.stringify(MASTER_TEMPLATE)); // Deep copy
+            
             const STORAGE_KEY = 'quoteBuilderEnhanced';
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
+            
+            // Only load from localStorage if it exists AND we're not forcing a reset
+            // We'll check for a session flag to prevent unwanted loading
+            const forceMaster = sessionStorage.getItem('forceMasterTemplate');
+            
+            if (saved && !forceMaster) {
                 try { 
-                    quoteData = JSON.parse(saved); 
-                } catch(e) {}
+                    const parsed = JSON.parse(saved);
+                    // Validate that parsed data has the expected structure
+                    if (parsed && parsed.sections && parsed.sections.length > 0) {
+                        quoteData = parsed;
+                    }
+                } catch(e) {
+                    console.log('Using master template due to parse error');
+                }
             }
+            
+            // Clear the force flag if it exists
+            sessionStorage.removeItem('forceMasterTemplate');
 
             const receiptEl = document.getElementById('receiptContainer');
             const body = document.body;
+            const toastEl = document.getElementById('toast');
+
+            function showToast(message) {
+                toastEl.textContent = message;
+                toastEl.classList.add('show');
+                setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 2000);
+            }
 
             function formatPrice(num) { 
                 return '₦' + num.toLocaleString('en-NG'); 
@@ -649,6 +708,7 @@
                             }
                             quoteData.sections[secIdx].items.splice(itemIdx, 1);
                             render();
+                            showToast('Item removed');
                         }
                     });
                 });
@@ -659,6 +719,7 @@
                         if (secIdx !== undefined) {
                             quoteData.sections[secIdx].items.push({ desc: 'new item', price: 0 });
                             render();
+                            showToast('Item added');
                         }
                     });
                 });
@@ -669,6 +730,7 @@
                         if (secIdx !== undefined && quoteData.sections.length > 1) {
                             quoteData.sections.splice(secIdx, 1);
                             render();
+                            showToast('Section removed');
                         } else {
                             alert('Cannot delete the only section.');
                         }
@@ -684,6 +746,7 @@
                             note: 'add notes here' 
                         });
                         render();
+                        showToast('Section added');
                     });
                 }
             }
@@ -746,8 +809,28 @@
                         }
                         
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(quoteData));
+                        showToast('Changes saved');
                     });
                 });
+            }
+
+            // Reset to master template
+            function resetToMaster() {
+                if (confirm('Reset to default template? Any unsaved changes will be lost.')) {
+                    // Set a flag to prevent loading from localStorage on next render
+                    sessionStorage.setItem('forceMasterTemplate', 'true');
+                    
+                    // Clear localStorage
+                    localStorage.removeItem(STORAGE_KEY);
+                    
+                    // Reset quoteData to master template
+                    quoteData = JSON.parse(JSON.stringify(MASTER_TEMPLATE));
+                    
+                    // Re-render
+                    render();
+                    
+                    showToast('Reset to default template');
+                }
             }
 
             // Capture canvas helper
@@ -789,7 +872,7 @@
             document.getElementById('copyBtn').addEventListener('click', () => {
                 const text = receiptEl.innerText;
                 navigator.clipboard.writeText(text).then(() => {
-                    alert('✓ Quote copied to clipboard! You can paste into Notes, Mail, or Messages');
+                    showToast('✓ Quote copied to clipboard!');
                 }).catch(() => {
                     // Fallback
                     const textarea = document.createElement('textarea');
@@ -798,7 +881,7 @@
                     textarea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textarea);
-                    alert('✓ Quote copied!');
+                    showToast('✓ Quote copied!');
                 });
             });
 
@@ -843,6 +926,9 @@
 
             // 4. Save PDF button
             document.getElementById('savePDF').addEventListener('click', fallbackPDF);
+            
+            // 5. Reset button
+            document.getElementById('refreshBtn').addEventListener('click', resetToMaster);
 
             // Helper function for PDF generation
             async function fallbackPDF() {
@@ -861,6 +947,7 @@
                     
                     // Try to save
                     pdf.save('estimate.pdf');
+                    showToast('PDF saved');
                     
                     // For iOS, also offer alternative
                     if (navigator.userAgent.match(/iPad|iPhone|iPod/i)) {
