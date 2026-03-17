@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>estimate · pro + admin + share · painter & plumber</title>
+    <title>estimate · pro + admin + share · painter & plumber & carpenter</title>
     <!-- Roboto Mono – refined monospace -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -361,7 +361,7 @@
         }
         
         .ios-hint {
-display: none;
+            display: none;
             background: #fff3cd;
             border: 1px solid #ffeeba;
             color: #856404;
@@ -405,11 +405,11 @@ display: none;
 
     <script>
         (function() {
-            // Initial data with v2's detailed breakdown structure
+            // Initial data with painter, plumber, and two carpenter sections
             let quoteData = {
                 header: { 
-                    h1: "ESTIMATE · 2510", 
-                    p: "10 march 2026  //  interior/exterior + water system" 
+                    h1: "ESTIMATE · 2703", 
+                    p: "17 march 2026  //  interior/exterior + water system + carpentry"
                 },
                 sections: [
                     {
@@ -457,12 +457,54 @@ display: none;
                             { desc: "treatment package (lump sum)", price: 1815000 }
                         ],
                         note: "all connectors & treatment as specified"
+                    },
+                    {
+                        title: "carpenter · option A (premium)",
+                        items: [
+                            { desc: "HDF board (7 pcs @39,000)", price: 273000 },
+                            { desc: "Plywood for door (16 pcs @15,000)", price: 240000 },
+                            { desc: "To bond (adhesive)", price: 20000 },
+                            { desc: "Bond glue (8 packs)", price: 120000 },
+                            { desc: "Nails and filler", price: 10000 },
+                            { desc: "Door hinge", price: 20000 },
+                            { desc: "Keys (8 pcs @18,000)", price: 144000 },
+                            { desc: "Paint", price: 40000 },
+                            { desc: "Rubber for net", price: 10000 },
+                            { desc: "Sardines sealer", price: 10000 },
+                            { desc: "Thinner", price: 5000 },
+                            { desc: "Edges tape", price: 12000 },
+                            { desc: "Evo still gum", price: 15000 },
+                            { desc: "Net", price: 30000 },
+                            { desc: "Transport", price: 20000 },
+                            { desc: "Workmanship", price: 250000 }
+                        ],
+                        note: "option A – detailed premium materials, total ~1,219,000 (adjust as needed)"
+                    },
+                    {
+                        title: "carpenter · option B (economy)",
+                        items: [
+                            { desc: "HDF board (7 pcs @39,000)", price: 273000 },
+                            { desc: "Body filler", price: 120000 },
+                            { desc: "Nail and sand paper", price: 15000 },
+                            { desc: "Hinge", price: 20000 },
+                            { desc: "Keys (8 packs @18,000)", price: 144000 },
+                            { desc: "Paint", price: 30000 },
+                            { desc: "Rubber for net", price: 10000 },
+                            { desc: "Sardines sealer", price: 10000 },
+                            { desc: "Thinner", price: 8000 },
+                            { desc: "Adiner (adhesive?)", price: 15000 },
+                            { desc: "Handie (handles?)", price: 6000 },
+                            { desc: "Net", price: 30000 },
+                            { desc: "Transport", price: 20000 },
+                            { desc: "Workmanship", price: 200000 }
+                        ],
+                        note: "option B – simplified materials, total ~901,000 (workmanship included)"
                     }
                 ],
                 footer: { 
-                    left: "ref: est#2510", 
-                    center: "10 march 2026", 
-                    right: "contractor copy" 
+                    left: "ref: est#2703", 
+                    center: "17 march 2026", 
+                    right: "contractor copy · incl. carpenter options" 
                 }
             };
 
@@ -560,18 +602,19 @@ display: none;
                     html += `</div>`;
                 }
 
-                // Grand total area
-                const painterTotal = calculateSectionTotal(quoteData.sections[0].items);
-                const plumberTotal = calculateSectionTotal(quoteData.sections[1].items);
-                const grandTotal = painterTotal + plumberTotal;
-
+                // Grand total area – dynamically list all section totals
                 html += `<div class="grand-container">`;
-                html += `<div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 8px;" contenteditable="${isAdmin}">`;
-                html += `<span>painter</span><span>${formatPrice(painterTotal)}</span>`;
-                html += `</div>`;
-                html += `<div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 16px;" contenteditable="${isAdmin}">`;
-                html += `<span>plumber</span><span>${formatPrice(plumberTotal)}</span>`;
-                html += `</div>`;
+                
+                // List each section total
+                quoteData.sections.forEach((section, idx) => {
+                    const secTotal = calculateSectionTotal(section.items);
+                    html += `<div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 400; color: #333; margin-bottom: 8px;" contenteditable="${isAdmin}">`;
+                    html += `<span>${section.title}</span><span>${formatPrice(secTotal)}</span>`;
+                    html += `</div>`;
+                });
+
+                // Grand total (sum of all section totals)
+                const grandTotal = quoteData.sections.reduce((sum, section) => sum + calculateSectionTotal(section.items), 0);
                 html += `<div class="grand-row" contenteditable="${isAdmin}">`;
                 html += `<span class="grand-label" contenteditable="${isAdmin}">grand total</span>`;
                 html += `<span>${formatPrice(grandTotal)}</span>`;
@@ -759,7 +802,7 @@ display: none;
                 });
             });
 
-            // 3. SHARE PDF BUTTON - This is what you asked for!
+            // 3. SHARE PDF BUTTON
             document.getElementById('shareBtn').addEventListener('click', async () => {
                 try {
                     const canvas = await captureCanvas();
@@ -776,7 +819,7 @@ display: none;
                             try {
                                 await navigator.share({
                                     title: 'Construction Estimate',
-                                    text: 'Painter & Plumber Quote',
+                                    text: 'Painter, Plumber & Carpenter Quote',
                                     files: [file]
                                 });
                                 console.log('Shared successfully');
